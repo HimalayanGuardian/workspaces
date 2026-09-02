@@ -8,6 +8,7 @@
 import { observer } from "mobx-react";
 import { useParams, usePathname } from "next/navigation";
 import { cn } from "@plane/utils";
+import { AttendanceCheckInButton } from "@/components/attendance";
 import { TopNavPowerK } from "@/components/navigation";
 import { HelpMenuRoot } from "@/components/workspace/sidebar/help-section/root";
 import { UserMenuRoot } from "@/components/workspace/sidebar/user-menu-root";
@@ -79,6 +80,7 @@ export const TopNavigationRoot = observer(function TopNavigationRoot() {
         </Tooltip>
         <HelpMenuRoot />
         <StarUsOnGitHubLink />
+        <AttendanceCheckInButton />
         <div className="flex size-8 items-center justify-center rounded-md hover:bg-layer-1-hover">
           <UserMenuRoot />
         </div>

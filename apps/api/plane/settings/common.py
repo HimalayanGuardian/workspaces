@@ -141,6 +141,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "anon": "30/minute",
         "asset_id": "5/minute",
+        "attendance": "30/minute",
     },
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
     "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
@@ -152,6 +153,12 @@ REST_FRAMEWORK = {
 
 # API key throttle rate (DRF SimpleRateThrottle format, e.g. "60/minute")
 API_KEY_RATE_LIMIT = os.environ.get("API_KEY_RATE_LIMIT", "60/minute")
+
+# Attendance -- the Atlas Odoo bridge. Server-side only: the key must never
+# reach a browser. Unset means the feature reports itself unavailable and the
+# navbar hides the control.
+ODOO_BASE_URL = os.environ.get("ODOO_BASE_URL", "").rstrip("/")
+ODOO_API_KEY = os.environ.get("ODOO_API_KEY", "")
 
 # Django Auth Backend
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)  # default
