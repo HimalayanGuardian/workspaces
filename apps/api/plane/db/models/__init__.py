@@ -79,7 +79,7 @@ from .workspace import (
 
 from .favorite import UserFavorite
 
-from .issue_type import IssueType
+from .issue_type import IssueType, ProjectIssueType
 
 from .recent_visit import UserRecentVisit
 
@@ -90,3 +90,23 @@ from .device import Device, DeviceSession
 from .sticky import Sticky
 
 from .description import Description, DescriptionVersion
+
+from .operations import (
+    Deployment,
+    DeploymentEnvironment,
+    DeploymentIssue,
+    DeploymentStatus,
+    OperationsRecord,
+    OperationsRecordIssue,
+    OperationsRecordParticipant,
+    OperationsRecordType,
+    OperationsSetting,
+    OperationsTicket,
+    OperationsTicketActivity,
+    OperationsTicketComment,
+    OperationsTicketSource,
+    OperationsTicketStatus,
+    OPERATIONS_TICKET_TERMINAL_STATUSES,
+    WorkLog,
+    WorkLogIssue,
+)

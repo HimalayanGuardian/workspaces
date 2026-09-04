@@ -135,3 +135,13 @@ from .draft import (
     DraftIssueSerializer,
     DraftIssueDetailSerializer,
 )
+
+from .operations import (
+    DeploymentSerializer,
+    OperationsRecordSerializer,
+    OperationsSettingSerializer,
+    OperationsTicketActivitySerializer,
+    OperationsTicketCommentSerializer,
+    OperationsTicketSerializer,
+    WorkLogSerializer,
+)

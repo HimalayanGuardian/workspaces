@@ -105,6 +105,36 @@ export const coreRoutes: RouteConfigEntry[] = [
           route(":workspaceSlug/stickies", "./(all)/[workspaceSlug]/(projects)/stickies/page.tsx"),
         ]),
 
+        // Engineering Operations
+        // One layout for the whole section: the tabs live in its header, so
+        // moving between screens keeps the shell mounted.
+        layout("./(all)/[workspaceSlug]/(projects)/operations/layout.tsx", [
+          route(":workspaceSlug/operations", "./(all)/[workspaceSlug]/(projects)/operations/page.tsx"),
+          route(
+            ":workspaceSlug/operations/work-logs",
+            "./(all)/[workspaceSlug]/(projects)/operations/work-logs/page.tsx"
+          ),
+          route(
+            ":workspaceSlug/operations/attendance",
+            "./(all)/[workspaceSlug]/(projects)/operations/attendance/page.tsx"
+          ),
+          route(":workspaceSlug/operations/tickets", "./(all)/[workspaceSlug]/(projects)/operations/tickets/page.tsx"),
+          route(
+            ":workspaceSlug/operations/deployments",
+            "./(all)/[workspaceSlug]/(projects)/operations/deployments/page.tsx"
+          ),
+          route(":workspaceSlug/operations/records", "./(all)/[workspaceSlug]/(projects)/operations/records/page.tsx"),
+          route(
+            ":workspaceSlug/operations/analytics",
+            "./(all)/[workspaceSlug]/(projects)/operations/analytics/page.tsx"
+          ),
+          route(":workspaceSlug/operations/reports", "./(all)/[workspaceSlug]/(projects)/operations/reports/page.tsx"),
+          route(
+            ":workspaceSlug/operations/settings",
+            "./(all)/[workspaceSlug]/(projects)/operations/settings/page.tsx"
+          ),
+        ]),
+
         // Workspace Views
         layout("./(all)/[workspaceSlug]/(projects)/workspace-views/layout.tsx", [
           route(":workspaceSlug/workspace-views", "./(all)/[workspaceSlug]/(projects)/workspace-views/page.tsx"),

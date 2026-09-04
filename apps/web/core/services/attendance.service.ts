@@ -62,6 +62,78 @@ export type TAttendanceError = {
     | "conflict";
 };
 
+/**
+ * A payload from an endpoint that needs Odoo bridge routes this deployment may
+ * not have yet. `available: false` with `code: "bridge_endpoint_missing"` means
+ * the module in `odoo-implementation/ODOO_MODULE_SPEC.md` has not shipped --
+ * the UI hides the panel and says so, rather than showing an error.
+ */
+export type TAttendanceOptional<T> = ({ available: true } & T) | { available: false; code?: string; error?: string };
+
+export type TAttendanceHistoryDay = {
+  date: string;
+  worked_hours: number;
+  expected_hours: number;
+  status: "present" | "absent" | "leave" | "holiday" | "weekend";
+  sessions: TAttendanceSession[];
+};
+
+export type TAttendanceHistory = TAttendanceOptional<{
+  employee?: { id: number; name: string; work_email: string };
+  timezone?: string;
+  start_date: string;
+  end_date: string;
+  days: TAttendanceHistoryDay[];
+  totals: {
+    worked_hours: number;
+    expected_hours: number;
+    present_days: number;
+    absent_days: number;
+    leave_days: number;
+  };
+}>;
+
+export type TLeaveBalance = {
+  type: string;
+  allocated: number;
+  taken: number;
+  pending: number;
+  remaining: number;
+  unit: string;
+};
+
+export type TLeaveRequest = {
+  id: number;
+  type: string;
+  start_date: string;
+  end_date: string;
+  days: number;
+  state: string;
+  description: string;
+};
+
+export type TAttendanceLeave = TAttendanceOptional<{
+  year: number;
+  balances: TLeaveBalance[];
+  requests: TLeaveRequest[];
+}>;
+
+export type THoliday = { date: string; name: string; type: string };
+
+export type TAttendanceHolidays = TAttendanceOptional<{
+  year: number;
+  calendar: string;
+  holidays: THoliday[];
+}>;
+
+export type TWorkingHours = TAttendanceOptional<{
+  calendar: string;
+  timezone: string;
+  hours_per_day: number;
+  hours_per_week: number;
+  days: { weekday: number; from: string; to: string; break_hours: number }[];
+}>;
+
 export class AttendanceService extends APIService {
   constructor() {
     super(API_BASE_URL);
@@ -87,6 +159,46 @@ export class AttendanceService extends APIService {
   /** Coordinates are best-effort here: a check-out is never blocked on a fix. */
   async checkOut(coordinates?: TAttendanceCoordinates): Promise<TAttendanceStatus> {
     return this.post("/api/attendance/check-out/", coordinates ?? {})
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  /**
+   * Attendance over a date range.
+   *
+   * Answers `{ available: false }` until the bridge grows the history route --
+   * check that flag before reading anything else.
+   */
+  async getHistory(startDate?: string, endDate?: string): Promise<TAttendanceHistory> {
+    return this.get("/api/attendance/history/", {
+      params: { start_date: startDate, end_date: endDate },
+    })
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async getLeave(): Promise<TAttendanceLeave> {
+    return this.get("/api/attendance/leave/")
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async getHolidays(year?: number): Promise<TAttendanceHolidays> {
+    return this.get("/api/attendance/holidays/", { params: { year } })
+      .then((response) => response?.data)
+      .catch((error) => {
+        throw error?.response?.data;
+      });
+  }
+
+  async getWorkingHours(): Promise<TWorkingHours> {
+    return this.get("/api/attendance/working-hours/")
       .then((response) => response?.data)
       .catch((error) => {
         throw error?.response?.data;

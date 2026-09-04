@@ -7,7 +7,11 @@ from django.urls import path
 from plane.app.views import (
     AttendanceCheckInEndpoint,
     AttendanceCheckOutEndpoint,
+    AttendanceHistoryEndpoint,
+    AttendanceHolidayEndpoint,
+    AttendanceLeaveEndpoint,
     AttendanceStatusEndpoint,
+    AttendanceWorkingHoursEndpoint,
 )
 
 # User-scoped, so no workspace slug. `plane.app.urls` is mounted at `api/`,
@@ -17,4 +21,11 @@ urlpatterns = [
     path("attendance/me/", AttendanceStatusEndpoint.as_view(), name="attendance-status"),
     path("attendance/check-in/", AttendanceCheckInEndpoint.as_view(), name="attendance-check-in"),
     path("attendance/check-out/", AttendanceCheckOutEndpoint.as_view(), name="attendance-check-out"),
+    # Everything below needs the Odoo module described in
+    # odoo-implementation/ODOO_MODULE_SPEC.md. Until that ships they answer
+    # 200 with `available: false` rather than pretending to be broken.
+    path("attendance/history/", AttendanceHistoryEndpoint.as_view(), name="attendance-history"),
+    path("attendance/leave/", AttendanceLeaveEndpoint.as_view(), name="attendance-leave"),
+    path("attendance/holidays/", AttendanceHolidayEndpoint.as_view(), name="attendance-holidays"),
+    path("attendance/working-hours/", AttendanceWorkingHoursEndpoint.as_view(), name="attendance-working-hours"),
 ]

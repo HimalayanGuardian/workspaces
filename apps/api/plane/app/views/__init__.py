@@ -239,8 +239,40 @@ from .user.base import AccountEndpoint, ProfileEndpoint, UserSessionEndpoint
 
 from .timezone.base import TimezoneEndpoint
 
-from .attendance.base import (
+from .attendance import (
     AttendanceCheckInEndpoint,
     AttendanceCheckOutEndpoint,
+    AttendanceHistoryEndpoint,
+    AttendanceHolidayEndpoint,
+    AttendanceLeaveEndpoint,
     AttendanceStatusEndpoint,
+    AttendanceWorkingHoursEndpoint,
+    TeamAvailabilityEndpoint,
+)
+
+from .operations import (
+    DeliveryAnalyticsEndpoint,
+    DeveloperDashboardEndpoint,
+    DevOpsDashboardEndpoint,
+    MissingWorkLogEndpoint,
+    MyWorkLogEndpoint,
+    OperationsBootstrapEndpoint,
+    OperationsRecordViewSet,
+    OperationsReportEndpoint,
+    OperationsSettingEndpoint,
+    OperationsStateMappingEndpoint,
+    OperationsTicketActivityEndpoint,
+    OperationsTicketCommentViewSet,
+    OperationsTicketConvertEndpoint,
+    OperationsTicketTransitionEndpoint,
+    OperationsTicketViewSet,
+    PMDashboardEndpoint,
+    ProductivityAnalyticsEndpoint,
+    ProjectDeploymentViewSet,
+    QADashboardEndpoint,
+    QualityAnalyticsEndpoint,
+    TeamAnalyticsEndpoint,
+    WorkLogSubmitEndpoint,
+    WorkLogViewSet,
+    WorkspaceDeploymentEndpoint,
 )

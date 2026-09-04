@@ -28,7 +28,10 @@ from plane.utils.odoo_bridge import (
     is_configured,
 )
 
-logger = logging.getLogger("plane")
+# "plane.external" is the configured logger for outbound integrations: it has a
+# console handler and its own level. A bare "plane" logger has neither, so under
+# production's disable_existing_loggers these warnings would never be seen.
+logger = logging.getLogger("plane.external")
 
 # Deliberately says nothing about why. A bad key, a blocked reverse proxy and a
 # timeout are all operator problems, and none of the bridge's internals belong

@@ -4,6 +4,7 @@
  * See the LICENSE file for details.
  */
 
+import { Gauge } from "lucide-react";
 import {
   AnalyticsIcon,
   ArchiveIcon,
@@ -40,5 +41,9 @@ export const getSidebarNavigationItemIcon = (key: string, className: string = ""
       return <ArchiveIcon className={cn("size-4 flex-shrink-0", className)} />;
     case "stickies":
       return <MultipleStickyIcon className={cn("size-4 flex-shrink-0", className)} />;
+    // Propel has no operations glyph; a gauge reads as "how things are running",
+    // which is what the section is.
+    case "operations":
+      return <Gauge className={cn("size-4 flex-shrink-0", className)} />;
   }
 };

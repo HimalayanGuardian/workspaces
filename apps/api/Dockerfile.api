@@ -20,9 +20,12 @@ RUN apk add --no-cache --upgrade \
 
 COPY requirements.txt ./
 COPY requirements ./requirements
-RUN apk add --no-cache libffi-dev
+# libffi-dev is only needed to compile wheels, so it belongs in .build-deps with
+# the rest of the toolchain. Installed on its own it survives `apk del` below
+# and stays in the final image for nothing.
 RUN apk add --no-cache --virtual .build-deps \
     "bash~=5.2" \
+    "libffi-dev" \
     "g++" \
     "gcc" \
     "cargo" \
@@ -48,11 +51,23 @@ COPY package.json package.json
 RUN apk --no-cache add "bash~=5.2"
 COPY ./bin ./bin/
 
-RUN mkdir -p /code/plane/logs
-RUN chmod +x ./bin/*
-RUN chmod -R 777 /code
+# Only two paths are written at runtime: the log directory, and the static root
+# that `collectstatic` fills in at container start. A recursive chmod over /code
+# rewrites the mode of every file, which makes the layer a second copy of the
+# entire tree -- and grants write access to the source for no reason.
+# Both live under BASE_DIR, which settings/common.py resolves to /code/plane
+# (the directory holding the settings package, not the repo root).
+RUN mkdir -p /code/plane/logs /code/plane/static-assets/collected-static \
+    && chmod +x ./bin/* \
+    && chmod -R 777 /code/plane/logs /code/plane/static-assets
 
 # Expose container port and run entry point script
 EXPOSE 8000
+
+# No HEALTHCHECK here on purpose. This one image is also the worker, the beat
+# scheduler and the migrator, and none of those listen on 8000 -- a check baked
+# in here would mark three healthy containers unhealthy forever. The api
+# service gets its check in the compose overlay, where it applies to the one
+# role that actually serves HTTP.
 
 CMD ["./bin/docker-entrypoint-api.sh"]

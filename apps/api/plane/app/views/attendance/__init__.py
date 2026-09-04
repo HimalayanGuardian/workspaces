@@ -7,9 +7,21 @@ from .base import (
     AttendanceCheckOutEndpoint,
     AttendanceStatusEndpoint,
 )
+from .extended import (
+    AttendanceHistoryEndpoint,
+    AttendanceHolidayEndpoint,
+    AttendanceLeaveEndpoint,
+    AttendanceWorkingHoursEndpoint,
+    TeamAvailabilityEndpoint,
+)
 
 __all__ = [
     "AttendanceCheckInEndpoint",
     "AttendanceCheckOutEndpoint",
     "AttendanceStatusEndpoint",
+    "AttendanceHistoryEndpoint",
+    "AttendanceHolidayEndpoint",
+    "AttendanceLeaveEndpoint",
+    "AttendanceWorkingHoursEndpoint",
+    "TeamAvailabilityEndpoint",
 ]

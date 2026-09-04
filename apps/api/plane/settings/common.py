@@ -350,6 +350,13 @@ CELERY_IMPORTS = (
     "plane.bgtasks.email_notification_task",
     "plane.bgtasks.cleanup_task",
     "plane.license.bgtasks.telemetry_metrics",
+    # Engineering Operations reminders. A module only ever reached through the
+    # beat schedule has to be listed here: `autodiscover_tasks` looks for a
+    # `tasks` module inside each installed app and finds nothing under
+    # `plane/bgtasks/*_task.py`, so a task nothing imports at runtime is never
+    # registered -- beat would publish it and every worker would reject it as
+    # "unregistered", with the reminders silently never running.
+    "plane.bgtasks.operations_reminder_task",
     # management tasks
     "plane.bgtasks.dummy_data_task",
     # issue version tasks

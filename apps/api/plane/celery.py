@@ -51,6 +51,26 @@ app.conf.beat_schedule = {
         "task": "plane.license.bgtasks.telemetry_metrics.push_instance_metrics",
         "schedule": schedule(run_every=timedelta(minutes=METRICS_PUSH_INTERVAL_MINUTES)),
     },
+    # Engineering Operations reminders. Hourly rather than daily because each
+    # one checks the workspace's *local* hour before firing -- a single UTC
+    # schedule cannot otherwise respect a team in Kathmandu and a team in
+    # Lisbon at once. The tasks themselves refuse to notify twice a day.
+    "engineering-ops-missing-work-logs": {
+        "task": "plane.bgtasks.operations_reminder_task.remind_missing_work_logs",
+        "schedule": crontab(minute=10),  # hourly, at :10
+    },
+    "engineering-ops-missing-attendance": {
+        "task": "plane.bgtasks.operations_reminder_task.remind_missing_attendance",
+        "schedule": crontab(minute=20),  # hourly, at :20
+    },
+    "engineering-ops-blocked-and-overdue": {
+        "task": "plane.bgtasks.operations_reminder_task.remind_blocked_and_overdue",
+        "schedule": crontab(hour=4, minute=0),  # UTC 04:00
+    },
+    "engineering-ops-operations-tickets": {
+        "task": "plane.bgtasks.operations_reminder_task.remind_operations_tickets",
+        "schedule": crontab(hour=4, minute=15),  # UTC 04:15
+    },
     # Occurs once every day
     "check-every-day-to-delete-hard-delete": {
         "task": "plane.bgtasks.deletion_task.hard_delete",

@@ -20,7 +20,10 @@ import requests
 # Django imports
 from django.conf import settings
 
-logger = logging.getLogger("plane")
+# "plane.external" is the configured logger for outbound integrations: it has a
+# console handler and its own level. A bare "plane" logger has neither, so under
+# production's disable_existing_loggers these warnings would never be seen.
+logger = logging.getLogger("plane.external")
 
 # Connect / read. An unreachable Odoo must never tie up a Plane worker.
 BRIDGE_TIMEOUT = (5, 10)
@@ -113,3 +116,27 @@ def call(method, path, *, params=None, json=None):
         raise OdooBridgeUnavailable(f"Odoo bridge returned {response.status_code}")
 
     return response.status_code, payload
+
+
+# Endpoints beyond the three the deployed bridge already serves. A bridge that
+# has not been upgraded answers 404 for these, which is a fact about the
+# deployment rather than an error -- see `call_optional`.
+UNSUPPORTED_STATUSES = (404, 405, 501)
+
+
+def call_optional(method, path, *, params=None, json=None):
+    """
+    Like :func:`call`, but treats "this bridge does not have that endpoint" as
+    an answer rather than a failure.
+
+    Returns ``(status_code, payload)`` as usual, or ``(None, None)`` when the
+    bridge does not implement the route. Callers turn the second case into an
+    honest ``{"available": false}`` instead of a 503 that suggests something is
+    broken -- attendance history and leave balances need the Odoo module
+    described in ``odoo-implementation/ODOO_MODULE_SPEC.md``, and until it is
+    deployed the feature is simply absent.
+    """
+    status_code, payload = call(method, path, params=params, json=json)
+    if status_code in UNSUPPORTED_STATUSES:
+        return None, None
+    return status_code, payload
