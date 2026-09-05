@@ -5,8 +5,8 @@
 # Writes nothing, changes nothing, stops nothing. Run it on the VPS from this
 # repository's checkout:
 #
-#   deployments/hgn/inspect-existing.sh            # old stack in /opt/plane
-#   OLD_DIR=/var/plane deployments/hgn/inspect-existing.sh
+#   deployments/virex/inspect-existing.sh            # old stack in /opt/plane
+#   OLD_DIR=/var/plane deployments/virex/inspect-existing.sh
 #
 # Hand the whole output back before running any migration steps -- the version
 # it reports decides whether this is an upgrade, a no-op, or not possible.

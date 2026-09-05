@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Post-deploy verification for the HGN deployment. Run on the VPS, from the
+# Post-deploy verification for the Virex deployment. Run on the VPS, from the
 # repository root, after `docker compose up -d --build`:
 #
-#   deployments/hgn/verify.sh https://workspaces.example.com
+#   deployments/virex/verify.sh https://virex.hgsoftware.com.np
 #
 # It checks, in order: every container is healthy, the proxy is bound to
 # loopback only, Caddy accepts its configuration, each container received the
@@ -19,7 +19,7 @@
 
 set -uo pipefail
 
-BASE=${1:?usage: deployments/hgn/verify.sh https://your.domain}
+BASE=${1:?usage: deployments/virex/verify.sh https://your.domain}
 BASE=${BASE%/}
 HOST=${BASE#*://}
 HOST=${HOST%%/*}
@@ -61,7 +61,7 @@ head_ "Edge"
 ports=$(docker compose port proxy 80 2>/dev/null || true)
 case "$ports" in
   127.0.0.1:*) ok "proxy published on loopback only ($ports)" ;;
-  *) bad "proxy is published on '$ports'; expected 127.0.0.1:<LISTEN_HTTP_PORT> (is deployments/hgn/compose.yml in COMPOSE_FILE?)" ;;
+  *) bad "proxy is published on '$ports'; expected 127.0.0.1:<LISTEN_HTTP_PORT> (is deployments/virex/compose.yml in COMPOSE_FILE?)" ;;
 esac
 if docker compose exec -T proxy caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile >/dev/null 2>&1; then
   ok "Caddy accepts its configuration with the live environment"

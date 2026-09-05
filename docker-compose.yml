@@ -163,7 +163,7 @@ services:
 
   # Comment this out if you already have a reverse proxy that routes to the
   # individual services. If you only have a TLS terminator in front, keep it
-  # and use deployments/hgn/compose.yml instead.
+  # and use deployments/virex/compose.yml instead.
   proxy:
     build:
       context: ./apps/proxy

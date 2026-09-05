@@ -1,22 +1,37 @@
 #!/usr/bin/env bash
 # First command of every install: create the production .env from the template.
 #
-#   deployments/hgn/init-env.sh workspaces.example.com
+#   deployments/virex/init-env.sh                      # virex.hgsoftware.com.np
+#   deployments/virex/init-env.sh staging.example.com  # somewhere else
 #
-# Copies deployments/hgn/.env.example to .env in the repository root, fills in
-# the domain, generates every secret, and locks the file down. Refuses to
+# Copies deployments/virex/.env.example to .env in the repository root, points
+# it at the domain, generates every secret, and locks the file down. Refuses to
 # overwrite an existing .env -- edit that one by hand instead. Also checks that
 # the installed Compose is new enough for the overlays.
 
 set -euo pipefail
 
-DOMAIN=${1:?usage: deployments/hgn/init-env.sh <public-domain>}
 ROOT=$(cd "$(dirname "$0")/../.." && pwd)
-TEMPLATE="$ROOT/deployments/hgn/.env.example"
+TEMPLATE="$ROOT/deployments/virex/.env.example"
 TARGET="$ROOT/.env"
 
+if [ ! -f "$TEMPLATE" ]; then
+  echo "error: $TEMPLATE not found" >&2
+  exit 1
+fi
+
+# The template is this project's own configuration, so its domain is the
+# default. Pass one to deploy the same code somewhere else.
+TEMPLATE_DOMAIN=$(sed -n 's/^APP_DOMAIN=//p' "$TEMPLATE" | head -1)
+DOMAIN=${1:-$TEMPLATE_DOMAIN}
+
+if [ -z "$DOMAIN" ]; then
+  echo "error: no domain given and APP_DOMAIN is empty in $TEMPLATE" >&2
+  exit 1
+fi
+
 case "$DOMAIN" in
-  *://*|*/*) echo "error: pass a bare hostname (workspaces.example.com), not a URL" >&2; exit 1 ;;
+  *://*|*/*) echo "error: pass a bare hostname (virex.hgsoftware.com.np), not a URL" >&2; exit 1 ;;
 esac
 
 if [ -e "$TARGET" ]; then
@@ -32,10 +47,21 @@ if [ -z "$compose_version" ]; then
   echo "error: 'docker compose' is not available; install the Compose v2 plugin" >&2
   exit 1
 fi
-major=${compose_version%%.*}
-minor=${compose_version#*.}; minor=${minor%%.*}
-if [ "${major:-0}" -lt 2 ] || { [ "$major" -eq 2 ] && [ "${minor:-0}" -lt 24 ]; }; then
-  echo "error: docker compose $compose_version is too old; v2.24 or newer is required" >&2
+# Some releases print "v2.24.0" and some "2.39.4". Strip everything that is not
+# a digit or a dot before comparing, or the leading "v" makes the numeric test
+# error out and the check silently passes whatever it was given.
+version_number=$(printf '%s' "$compose_version" | tr -cd '0-9.')
+major=${version_number%%.*}
+minor=${version_number#*.}; minor=${minor%%.*}
+case "$major$minor" in
+  ''|*[!0-9]*)
+    echo "error: could not read a version number from 'docker compose version --short' ($compose_version)" >&2
+    exit 1 ;;
+esac
+if [ "$major" -lt 2 ] || { [ "$major" -eq 2 ] && [ "$minor" -lt 24 ]; }; then
+  echo "error: docker compose $compose_version is too old; v2.24 or newer is required." >&2
+  echo "       Older releases merge the overlay's port list instead of replacing it," >&2
+  echo "       so Caddy would try to take ports 80 and 443 from your nginx." >&2
   exit 1
 fi
 
@@ -47,7 +73,7 @@ secret() { openssl rand -hex 32; }
 # any Compose version.
 umask 077
 sed \
-  -e "s|workspaces\.example\.com|${DOMAIN}|g" \
+  -e "s|${TEMPLATE_DOMAIN//./\\.}|${DOMAIN}|g" \
   -e "s|^SECRET_KEY=$|SECRET_KEY=$(secret)|" \
   -e "s|^LIVE_SERVER_SECRET_KEY=$|LIVE_SERVER_SECRET_KEY=$(secret)|" \
   -e "s|^POSTGRES_PASSWORD=$|POSTGRES_PASSWORD=$(secret)|" \
@@ -73,5 +99,5 @@ Next:
   2. If a stack already runs on this host, make sure COMPOSE_PROJECT_NAME matches
      its volume prefix ('docker volume ls') or it will start with empty volumes.
   3. docker compose up -d --build
-  4. deployments/hgn/verify.sh https://${DOMAIN}
+  4. deployments/virex/verify.sh https://${DOMAIN}
 EOF

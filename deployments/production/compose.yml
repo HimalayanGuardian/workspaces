@@ -8,7 +8,7 @@
 #
 # Never used on its own. Compose merges it over docker-compose.yml:
 #
-#   COMPOSE_FILE=docker-compose.yml:deployments/production/compose.yml[:deployments/hgn/compose.yml]
+#   COMPOSE_FILE=docker-compose.yml:deployments/production/compose.yml[:deployments/virex/compose.yml]
 #
 # Needs Compose v2.24 or newer.
 

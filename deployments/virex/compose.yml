@@ -1,4 +1,4 @@
-# HGN overlay: the edge. The VPS already runs nginx on 80/443 for other sites,
+# Virex overlay: the edge. The VPS already runs nginx on 80/443 for other sites,
 # so nginx terminates TLS and forwards to the stack's Caddy on loopback; Caddy
 # keeps all the path routing it ships with.
 #

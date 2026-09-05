@@ -44,7 +44,7 @@ is always the correct command — never add `-f` flags for production.
 - Deploy, operate, troubleshoot: [`DEPLOYMENT.md`](DEPLOYMENT.md)
 - Why the files look like this, and the merge gate to run after pulling upstream:
   [`docs/deployment/architecture.md`](docs/deployment/architecture.md)
-- Verify a deployment: `deployments/hgn/verify.sh https://<domain>`
+- Verify a deployment: `deployments/virex/verify.sh https://<domain>`
 
 Do not reintroduce the upstream CLI, AIO, Swarm or Helm deployment paths: they install
 `makeplane/*` images, which do not contain this fork's code. See

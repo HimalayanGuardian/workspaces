@@ -56,7 +56,7 @@ Three compose files, one environment file, one command.
 ```text
 docker-compose.yml                      base    what exists, how it builds, what each container gets
   + deployments/production/compose.yml  prod    health checks, ordering, log rotation
-  + deployments/hgn/compose.yml         edge    Caddy on loopback, trust the host nginx
+  + deployments/virex/compose.yml         edge    Caddy on loopback, trust the host nginx
 ```
 
 Each file answers exactly one question, and the questions are independent:
@@ -65,10 +65,10 @@ Each file answers exactly one question, and the questions are independent:
 | ------------------------------------ | ---------------------------- | ------------------------------------------------------------ |
 | `docker-compose.yml`                 | What is this system made of? | a service is added, or an image changes                      |
 | `deployments/production/compose.yml` | How does it run safely?      | a health check or start-up dependency changes                |
-| `deployments/hgn/compose.yml`        | Where does traffic enter?    | the edge changes (a second site, a different TLS terminator) |
+| `deployments/virex/compose.yml`      | Where does traffic enter?    | the edge changes (a second site, a different TLS terminator) |
 
 The split is by _reason to change_, not by environment. That is why the production overlay carries
-no HGN-specific detail: a second deployment of this fork on a different edge reuses it unchanged
+no site-specific detail: a second deployment of this fork on a different edge reuses it unchanged
 and writes only its own edge file.
 
 ### One obvious entry point
@@ -77,9 +77,9 @@ and writes only its own edge file.
 operator's shell:
 
 ```dotenv
-COMPOSE_FILE=docker-compose.yml:deployments/production/compose.yml:deployments/hgn/compose.yml
+COMPOSE_FILE=docker-compose.yml:deployments/production/compose.yml:deployments/virex/compose.yml
 COMPOSE_PATH_SEPARATOR=:
-COMPOSE_PROJECT_NAME=workspaces
+COMPOSE_PROJECT_NAME=virex
 ```
 
 Every documented command is then plain `docker compose …`. This matters more than it looks: the
@@ -171,7 +171,7 @@ for the empty string. Belt and braces, and the report of an empty value is a Com
 rather than a Caddy parse error.
 
 `TRUSTED_PROXIES` defaults to `0.0.0.0/0` in the base file (Caddy is the edge there and sees real
-client IPs) and is narrowed to `private_ranges` by the HGN overlay (nginx reaches Caddy over the
+client IPs) and is narrowed to `private_ranges` by the Virex overlay (nginx reaches Caddy over the
 docker bridge). Behind nginx the wide value would let any client spoof `X-Forwarded-For` and
 forge its own IP in Django's logs and rate limits.
 
@@ -215,7 +215,7 @@ three of them do not listen on 8000, so a baked-in check would mark them permane
 ├── deployments/
 │   ├── production/
 │   │   └── compose.yml                 PROD   health checks, ordering, log rotation
-│   └── hgn/
+│   └── virex/
 │       ├── compose.yml                 EDGE   Caddy on loopback, trust the host nginx
 │       ├── .env.example                       the production configuration template
 │       ├── nginx.conf                         host nginx vhost
@@ -249,14 +249,14 @@ to 8, and all 8 are used by the one deployment this fork performs.
   │                   │            │
   │                   │            └──config──▶ apps/proxy/Caddyfile.ce
   │                   ├─▶ deployments/production/compose.yml
-  │                   └─▶ deployments/hgn/compose.yml
+  │                   └─▶ deployments/virex/compose.yml
   │
   ├──env_file────────────▶ api · worker · beat-worker · migrator
   └──${...} interpolation─▶ every other service's environment allow-list
 
-deployments/hgn/.env.example ──init-env.sh──▶ .env
-deployments/hgn/nginx.conf   ──copied by hand──▶ /etc/nginx/sites-available/  (not read from the repo)
-deployments/hgn/verify.sh    ──reads──▶ docker compose ps / exec, and the public URL
+deployments/virex/.env.example ──init-env.sh──▶ .env
+deployments/virex/nginx.conf   ──copied by hand──▶ /etc/nginx/sites-available/  (not read from the repo)
+deployments/virex/verify.sh    ──reads──▶ docker compose ps / exec, and the public URL
 ```
 
 ### Runtime
@@ -360,7 +360,7 @@ The pattern is uniform, and it is the single most useful thing to know about thi
 empty value is not the same as an absent one.** Compose closes the gap for all seven.
 
 `FILE_SIZE_LIMIT` has a third consumer that compose cannot reach — `client_max_body_size` in
-`deployments/hgn/nginx.conf`, which lives on the host. nginx rejects an oversized body before Caddy
+`deployments/virex/nginx.conf`, which lives on the host. nginx rejects an oversized body before Caddy
 or Django see it, so the two must be kept in step by hand. `verify.sh` tests the boundary.
 
 ---
@@ -426,7 +426,7 @@ file is one `git show` away.
 
 ### One command, not a wrapper script
 
-A `deployments/hgn/compose.sh` wrapper was considered and rejected in favour of `COMPOSE_FILE` in
+A `deployments/virex/compose.sh` wrapper was considered and rejected in favour of `COMPOSE_FILE` in
 `.env`. A wrapper is a second thing to learn, does not help anyone who types `docker compose` out
 of habit, and does not fix `docker compose` invoked by tooling. Putting the chain in `.env` makes
 the _default_ correct instead of adding an alternative to it.
@@ -435,13 +435,13 @@ the _default_ correct instead of adding an alternative to it.
 
 Three were designed and scored against the brief before this one was built:
 
-- **Upstream-first**: keep upstream's root compose, put every change in the HGN overlay. Best merge
+- **Upstream-first**: keep upstream's root compose, put every change in the site overlay. Best merge
   story; worst on "configuration is centralized" — the overlay has to re-point `env_file` per
   service with `!override`, which is subtle and easy to get wrong.
 - **Single-source**: one env file, everything explicit in anchors, per-app env files deleted.
   Cleanest centralization; changes the contributor workflow and diverges most from upstream.
 - **Operator-first**: fold the loopback bind into the root file so there is one file and one
-  command. Best entry point; loses the separation between "base" and "HGN", which the brief asks
+  command. Best entry point; loses the separation between "base" and "site", which the brief asks
   for by name.
 
 What is built takes the entry point from the third, the explicit fan-out from the second, and the
@@ -471,5 +471,5 @@ Nothing here is asserted from reading. Each was run against this repository with
 | `engineering-ops-*` periodic tasks                                                                           | 4 registered and enabled                                                                                                         |
 | Migration `0123_engineering_operations`                                                                      | applied                                                                                                                          |
 
-`deployments/hgn/verify.sh` runs 51 of these on a live deployment and exits with the number of
+`deployments/virex/verify.sh` runs 51 of these on a live deployment and exits with the number of
 failures.

@@ -31,7 +31,7 @@ Meet [Plane](https://plane.so/), an open-source project management tool to track
 ## 🚀 Installation
 
 > [!IMPORTANT]
-> **This is the HGN fork of Plane.** It adds the Engineering Operations extension
+> **This is Virex, the HGN fork of Plane.** It adds the Engineering Operations extension
 > (see [`PROJECT.md`](PROJECT.md)) and an Odoo attendance bridge, and it deploys by
 > **building from source**, not from the published `makeplane/*` images. To deploy it, follow
 > [`DEPLOYMENT.md`](DEPLOYMENT.md) — the upstream self-hosting guides linked below install stock

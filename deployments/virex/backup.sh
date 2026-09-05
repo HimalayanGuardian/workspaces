@@ -2,8 +2,8 @@
 # Back up everything that cannot be rebuilt: the Postgres database and the
 # uploads volume. Run on the VPS from the repository root, with the stack up:
 #
-#   deployments/hgn/backup.sh                 # writes to ./backups/<timestamp>/
-#   deployments/hgn/backup.sh /mnt/backups    # somewhere else
+#   deployments/virex/backup.sh                 # writes to ./backups/<timestamp>/
+#   deployments/virex/backup.sh /mnt/backups    # somewhere else
 #
 # Keeps the newest BACKUP_KEEP sets (default 7) in the target directory and
 # removes older ones. Valkey and RabbitMQ hold only transient state and are
