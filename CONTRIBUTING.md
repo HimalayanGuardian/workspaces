@@ -53,7 +53,7 @@ The backend is a django project which is kept inside apps/api
 1. Clone the repo
 
 ```bash
-git clone https://github.com/makeplane/plane.git [folder-name]
+git clone https://github.com/HimalayanGuardian/workspaces.git [folder-name]
 cd [folder-name]
 chmod +x setup.sh
 ```

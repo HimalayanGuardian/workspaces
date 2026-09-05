@@ -1,0 +1,144 @@
+# Production overlay: how the stack runs safely, independent of where it runs.
+#
+#   health checks      every service that can be probed is probed
+#   start-up ordering  nothing talks to Postgres, Valkey or RabbitMQ before they
+#                      answer; the api, worker and beat wait for the migrator to
+#                      exit 0; the proxy waits for the apps it routes to
+#   log rotation       json-file logs capped per container
+#
+# Never used on its own. Compose merges it over docker-compose.yml:
+#
+#   COMPOSE_FILE=docker-compose.yml:deployments/production/compose.yml[:deployments/hgn/compose.yml]
+#
+# Needs Compose v2.24 or newer.
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+x-healthy: &healthy
+  condition: service_healthy
+
+# What every Django role waits for: the three backing services it connects to,
+# and the migrator having exited 0. A failed migration must stop the deploy,
+# not leave an api running on a half-migrated schema.
+x-django-depends: &django-depends
+  plane-db: *healthy
+  plane-redis: *healthy
+  plane-mq: *healthy
+  migrator:
+    condition: service_completed_successfully
+
+services:
+  # --------------------------------------------------------- backing services
+  plane-db:
+    logging: *logging
+    healthcheck:
+      # $$ keeps compose from interpolating; the shell in the container expands it.
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  plane-redis:
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+
+  plane-mq:
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 12
+      # RabbitMQ is the slowest service to boot on a small VPS.
+      start_period: 90s
+
+  plane-minio:
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 20s
+
+  # -------------------------------------------------------------- application
+  migrator:
+    logging: *logging
+    depends_on:
+      plane-db: *healthy
+      plane-redis: *healthy
+
+  api:
+    logging: *logging
+    healthcheck:
+      # plane.web.urls answers {"status": "OK"} at the root. Checked with
+      # python because the image ships no HTTP client.
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/', timeout=4).status == 200 else 1)"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      # register_instance, configure_instance and collectstatic all run before
+      # gunicorn binds.
+      start_period: 120s
+    depends_on:
+      <<: *django-depends
+      # create_bucket runs at start-up and needs MinIO to answer.
+      plane-minio: *healthy
+
+  worker:
+    logging: *logging
+    depends_on: *django-depends
+
+  # django_celery_beat syncs the schedule into the database on start-up;
+  # starting before the migration created those tables is a crash loop.
+  beat-worker:
+    logging: *logging
+    depends_on: *django-depends
+
+  live:
+    logging: *logging
+    healthcheck:
+      test: ["CMD", "wget", "-qO", "/dev/null", "http://127.0.0.1:3000/live/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      plane-redis: *healthy
+      api: *healthy
+
+  # web, admin and space carry a HEALTHCHECK in their images.
+  web:
+    logging: *logging
+  admin:
+    logging: *logging
+  space:
+    logging: *logging
+
+  proxy:
+    logging: *logging
+    healthcheck:
+      # Caddy's admin API answers once the config is loaded; probing it rather
+      # than a proxied route keeps the proxy's health independent of the apps.
+      test: ["CMD", "curl", "-fsS", "-o", "/dev/null", "http://127.0.0.1:2019/config/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    depends_on:
+      web: *healthy
+      admin: *healthy
+      space: *healthy
+      live: *healthy
+      api: *healthy
+      plane-minio: *healthy

@@ -33,4 +33,19 @@ Prereq (once): `./setup.sh` — generates `apps/api/.env` from `.env.example`.
 - Subset: `docker compose -f docker-compose-test.yml run --rm api-tests pytest -m unit`
 - Teardown: `docker compose -f docker-compose-test.yml down -v`
 
-See `apps/api/tests/RUNNING_TESTS.md` for the full walkthrough and troubleshooting; see `apps/api/tests/TESTING_GUIDE.md` for test conventions and fixtures.
+See `apps/api/tests/RUNNING_TESTS.md` for the full walkthrough and troubleshooting; see `apps/api/plane/tests/TESTING_GUIDE.md` for test conventions and fixtures.
+
+## Deployment
+
+Production runs on a VPS behind the host's own nginx, built from source. `.env` in the repository
+root is the only configuration file, and it carries `COMPOSE_FILE`, so plain `docker compose ...`
+is always the correct command — never add `-f` flags for production.
+
+- Deploy, operate, troubleshoot: [`DEPLOYMENT.md`](DEPLOYMENT.md)
+- Why the files look like this, and the merge gate to run after pulling upstream:
+  [`docs/deployment/architecture.md`](docs/deployment/architecture.md)
+- Verify a deployment: `deployments/hgn/verify.sh https://<domain>`
+
+Do not reintroduce the upstream CLI, AIO, Swarm or Helm deployment paths: they install
+`makeplane/*` images, which do not contain this fork's code. See
+[`docs/deployment/migration.md`](docs/deployment/migration.md).

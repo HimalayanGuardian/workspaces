@@ -16,7 +16,7 @@ Plane web app.
 | ---------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | `atlas-odoo-bridge/README.md`                        | The bridge's API contract, auth, and the two operational traps                                                                |
 | `atlas-odoo-bridge/atlas_bridge/controllers/main.py` | The real behaviour — read `protected`, `_resolve_employee`, `attendance_checkin`, `attendance_checkout`, `_attendance_status` |
-| `DEPLOYMENT.md` §2.5–2.6                             | How the key was generated and verified                                                                                        |
+| [`DEPLOYMENT.md`](../DEPLOYMENT.md) §8               | How the key was generated and verified                                                                                        |
 | `workspaces/AGENTS.md`                               | Plane's own build, lint and test commands. Follow them, don't invent                                                          |
 
 The Plane fork is already cloned at `/Users/bip1n/Documents/Code/HGN/workspaces` (Plane `1.4.2`,

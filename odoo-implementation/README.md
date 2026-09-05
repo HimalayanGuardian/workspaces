@@ -10,6 +10,20 @@ Atlas never talks to Odoo models directly; it only speaks to these endpoints.
 - Odoo **17.0+**
 - Depends on `hr`, `hr_attendance`, `hr_holidays`
 
+> [!IMPORTANT]
+> **This is the Odoo addon's own document, written for Atlas.** It is kept here for reference; it
+> is not the guide for deploying Workspaces. Two of its instructions do not apply to this
+> repository:
+>
+> - Where it says to **generate a new API key**, do not. Atlas is already a consumer of the same
+>   bridge and holds the same key; generating a new one silently breaks Atlas. Read the existing
+>   key instead.
+> - Its note that `ODOO_BASE_URL` / `ODOO_API_KEY` are only a first-boot fallback describes
+>   Atlas's settings model. In Workspaces those two variables in `.env` are the _only_ source, and
+>   `api`, `worker` and `beat-worker` must be recreated for a change to take effect.
+>
+> See [`DEPLOYMENT.md` §8](../DEPLOYMENT.md#8-switch-attendance-on).
+
 ---
 
 ## Deployment
@@ -177,11 +191,11 @@ curl -X POST -H "X-Atlas-Key: $ODOO_API_KEY" -H "Content-Type: application/json"
   somebody was near an office.
 - **Ranges are capped at 400 days** so a mistyped window cannot read years of attendance in one call, and a
   single leave request at 60.
-- **Leave decisions are made as a real Odoo user, and `sudo()` is not enough.** hr_holidays' approval checks
+- **Leave decisions are made as a real Odoo user, and `sudo()` is not enough.** hr*holidays' approval checks
   are business rules written against `env.user`, not access rights, so superuser mode does not satisfy them:
   they ask whether the acting user is the employee's Time Off Manager or an HR officer. Under `auth="none"`
   the acting user is the public user, who is neither — and a leave type set to two-step validation refuses
-  the _first_ approval with _"you are not his time off manager"_. So `/leave/approve`, `/leave/refuse` and
+  the \_first* approval with _"you are not his time off manager"_. So `/leave/approve`, `/leave/refuse` and
   `/leave/day` rebind the record with `with_user()` before acting. Set **Settings → Atlas Bridge → Approves
   leave as** to the user whose authority these decisions should carry; left empty, the first active Time Off
   Manager is used, and if there is none the attempt is logged and will fail.

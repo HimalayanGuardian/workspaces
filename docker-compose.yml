@@ -1,6 +1,61 @@
+# Plane, built from source -- the BASE definition of the stack.
+#
+# This file says which services exist, how each image is built, and what
+# configuration every container receives. It is meant to be combined with the
+# overlays under deployments/ -- see DEPLOYMENT.md for the production stack. On
+# its own this file runs everything with Caddy owning ports 80/443 and no
+# health checks, which is fine for a throwaway box and wrong for a server.
+#
+# Configuration comes from ONE file: .env in the repository root. Compose reads
+# it for the ${...} interpolation below; the Django containers additionally
+# load it with env_file so that any Django setting can be provided without
+# editing this file. Every other container receives an explicit allow-list --
+# nothing else leaks in. Defaults written here are the wiring of THIS compose
+# file (service names, container ports); real configuration lives in .env.
+#
+# Upstream (makeplane/plane) ships this file too. It is kept as close to
+# upstream as possible; the deliberate differences are listed in
+# docs/deployment/architecture.md.
+
+# Wiring defaults for the Django roles. .env can override any of them (for an
+# external database, broker or object store); left alone they point at the
+# services defined below.
+x-api-env: &api-env
+  POSTGRES_HOST: ${POSTGRES_HOST:-plane-db}
+  POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+  POSTGRES_USER: ${POSTGRES_USER:-plane}
+  POSTGRES_DB: ${POSTGRES_DB:-plane}
+  REDIS_URL: ${REDIS_URL:-redis://plane-redis:6379/}
+  RABBITMQ_HOST: ${RABBITMQ_HOST:-plane-mq}
+  RABBITMQ_PORT: ${RABBITMQ_PORT:-5672}
+  RABBITMQ_USER: ${RABBITMQ_USER:-plane}
+  RABBITMQ_VHOST: ${RABBITMQ_VHOST:-plane}
+  USE_MINIO: ${USE_MINIO:-1}
+  AWS_S3_ENDPOINT_URL: ${AWS_S3_ENDPOINT_URL:-http://plane-minio:9000}
+  AWS_S3_BUCKET_NAME: ${AWS_S3_BUCKET_NAME:-uploads}
+  FILE_SIZE_LIMIT: ${FILE_SIZE_LIMIT:-5242880}
+  # docker-entrypoint-api.sh passes this straight to gunicorn -w, with no default.
+  GUNICORN_WORKERS: ${GUNICORN_WORKERS:-2}
+
+# One image, four roles. Everything except the command is shared.
+x-api: &api
+  build:
+    context: ./apps/api
+    dockerfile: Dockerfile.api
+    args:
+      DOCKER_BUILDKIT: 1
+  restart: always
+  env_file:
+    - .env
+  environment:
+    <<: *api-env
+  depends_on:
+    - plane-db
+    - plane-redis
+    - plane-mq
+
 services:
   web:
-    container_name: web
     build:
       context: .
       dockerfile: ./apps/web/Dockerfile.web
@@ -11,7 +66,6 @@ services:
       - api
 
   admin:
-    container_name: admin
     build:
       context: .
       dockerfile: ./apps/admin/Dockerfile.admin
@@ -23,7 +77,6 @@ services:
       - web
 
   space:
-    container_name: space
     build:
       context: .
       dockerfile: ./apps/space/Dockerfile.space
@@ -35,143 +88,117 @@ services:
       - web
 
   api:
-    container_name: api
-    build:
-      context: ./apps/api
-      dockerfile: Dockerfile.api
-      args:
-        DOCKER_BUILDKIT: 1
-    restart: always
+    <<: *api
     command: ./bin/docker-entrypoint-api.sh
-    env_file:
-      - ./apps/api/.env
-    depends_on:
-      - plane-db
-      - plane-redis
 
   worker:
-    container_name: bgworker
-    build:
-      context: ./apps/api
-      dockerfile: Dockerfile.api
-      args:
-        DOCKER_BUILDKIT: 1
-    restart: always
+    <<: *api
     command: ./bin/docker-entrypoint-worker.sh
-    env_file:
-      - ./apps/api/.env
-    depends_on:
-      - api
-      - plane-db
-      - plane-redis
 
   beat-worker:
-    container_name: beatworker
-    build:
-      context: ./apps/api
-      dockerfile: Dockerfile.api
-      args:
-        DOCKER_BUILDKIT: 1
-    restart: always
+    <<: *api
     command: ./bin/docker-entrypoint-beat.sh
-    env_file:
-      - ./apps/api/.env
-    depends_on:
-      - api
-      - plane-db
-      - plane-redis
 
   migrator:
-    container_name: plane-migrator
-    build:
-      context: ./apps/api
-      dockerfile: Dockerfile.api
-      args:
-        DOCKER_BUILDKIT: 1
-    restart: no
+    <<: *api
+    restart: "no"
     command: ./bin/docker-entrypoint-migrator.sh
-    env_file:
-      - ./apps/api/.env
-    depends_on:
-      - plane-db
-      - plane-redis
 
   live:
-    container_name: plane-live
     build:
       context: .
       dockerfile: ./apps/live/Dockerfile.live
       args:
         DOCKER_BUILDKIT: 1
     restart: always
+    # apps/live/src/env.ts refuses to start without API_BASE_URL and
+    # LIVE_SERVER_SECRET_KEY, so both are mandatory here.
+    environment:
+      API_BASE_URL: ${API_BASE_URL:-http://api:8000}
+      REDIS_URL: ${REDIS_URL:-redis://plane-redis:6379/}
+      LIVE_BASE_PATH: ${LIVE_BASE_PATH:-/live}
+      LIVE_SERVER_SECRET_KEY: ${LIVE_SERVER_SECRET_KEY:?set LIVE_SERVER_SECRET_KEY in .env}
+    depends_on:
+      - api
+      - plane-redis
 
   plane-db:
-    container_name: plane-db
     image: postgres:15.7-alpine
     restart: always
     command: postgres -c 'max_connections=1000'
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-plane}
+      POSTGRES_DB: ${POSTGRES_DB:-plane}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      PGDATA: /var/lib/postgresql/data
     volumes:
       - pgdata:/var/lib/postgresql/data
-    env_file:
-      - .env
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      PGDATA: /var/lib/postgresql/data
 
   plane-redis:
-    container_name: plane-redis
     image: valkey/valkey:7.2.11-alpine
     restart: always
     volumes:
       - redisdata:/data
 
   plane-mq:
-    container_name: plane-mq
     image: rabbitmq:3.13.6-management-alpine
     restart: always
-    env_file:
-      - .env
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
-      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-plane}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?set RABBITMQ_PASSWORD in .env}
+      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST:-plane}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
 
   plane-minio:
-    container_name: plane-minio
-    image: minio/minio
+    # Pinned to the release that :latest resolved to when this was written.
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
     restart: always
     command: server /export --console-address ":9090"
+    environment:
+      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID:?set AWS_ACCESS_KEY_ID in .env}
+      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY:?set AWS_SECRET_ACCESS_KEY in .env}
     volumes:
       - uploads:/export
-    environment:
-      MINIO_ROOT_USER: ${AWS_ACCESS_KEY_ID}
-      MINIO_ROOT_PASSWORD: ${AWS_SECRET_ACCESS_KEY}
 
-  # Comment this if you already have a reverse proxy running
+  # Comment this out if you already have a reverse proxy that routes to the
+  # individual services. If you only have a TLS terminator in front, keep it
+  # and use deployments/hgn/compose.yml instead.
   proxy:
-    container_name: proxy
     build:
       context: ./apps/proxy
       dockerfile: Dockerfile.ce
     restart: always
     ports:
-      - ${LISTEN_HTTP_PORT}:80
-      - ${LISTEN_HTTPS_PORT}:443
+      - ${LISTEN_HTTP_PORT:-80}:80
+      - ${LISTEN_HTTPS_PORT:-443}:443
+    # Everything apps/proxy/Caddyfile.ce reads. The Caddyfile has its own
+    # fallbacks for the three values it cannot parse without, but Caddy only
+    # applies those when a variable is absent, not when it is empty -- which is
+    # why the defaults are repeated here with the :- form.
     environment:
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
       FILE_SIZE_LIMIT: ${FILE_SIZE_LIMIT:-5242880}
       BUCKET_NAME: ${AWS_S3_BUCKET_NAME:-uploads}
+      CERT_EMAIL: ${CERT_EMAIL:-}
+      CERT_ACME_CA: ${CERT_ACME_CA:-https://acme-v02.api.letsencrypt.org/directory}
+      CERT_ACME_DNS: ${CERT_ACME_DNS:-}
+      TRUSTED_PROXIES: ${TRUSTED_PROXIES:-0.0.0.0/0}
+    # Certificates and Caddy's state survive container recreation.
+    volumes:
+      - proxy_data:/data
+      - proxy_config:/config
     depends_on:
       - web
       - api
       - space
       - admin
+      - live
 
 volumes:
   pgdata:
   redisdata:
   uploads:
   rabbitmq_data:
+  proxy_data:
+  proxy_config:

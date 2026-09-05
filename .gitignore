@@ -88,7 +88,6 @@ tmp/
 ## packages
 dist
 .temp/
-deploy/selfhost/plane-app/
 
 ## Storybook
 *storybook.log
@@ -111,6 +110,8 @@ build/
 temp/
 scripts/
 !packages/i18n/scripts/
+# `scripts/` above matches at any depth. Deployment helpers must stay tracked.
+!deployments/**/scripts/
 
 # i18n auto-generated types (regenerated on every build)
 packages/i18n/src/types/keys.generated.ts
