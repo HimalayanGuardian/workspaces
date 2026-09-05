@@ -35,7 +35,7 @@ export const OperationsHeader = observer(function OperationsHeader() {
       </Header.LeftItem>
 
       <Header.RightItem>
-        <nav className="flex flex-wrap items-center gap-1">
+        <nav className="scrollbar-hide flex items-center gap-1 overflow-x-auto [&>a]:shrink-0 [&>a]:whitespace-nowrap">
           {OPERATIONS_TABS.map((tab) => {
             const href = tab.key ? `${base}/${tab.key}` : base;
             // The dashboard is the section root, so an `includes` test would
@@ -46,7 +46,7 @@ export const OperationsHeader = observer(function OperationsHeader() {
                 key={tab.key || "dashboard"}
                 href={href}
                 className={cn(
-                  "rounded-md px-2.5 py-1 text-13 font-medium transition-colors",
+                  "shrink-0 rounded-md px-2.5 py-1 text-13 font-medium whitespace-nowrap transition-colors",
                   isActive
                     ? "bg-layer-transparent-selected text-primary"
                     : "text-secondary hover:bg-layer-transparent-hover"

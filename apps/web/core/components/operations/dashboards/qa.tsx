@@ -39,7 +39,7 @@ const QueueRow = observer(function QueueRow({
   const priority = (issue.priority ?? "none") as keyof typeof PRIORITY_LABEL;
 
   return (
-    <li className="flex items-center justify-between gap-3 border-b border-subtle py-2 last:border-0">
+    <li className="flex flex-col gap-1 border-b border-subtle py-2 last:border-0 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
       <Link
         href={`/${workspaceSlug}/projects/${issue.project_id}/issues/${issue.id}`}
         className="flex min-w-0 items-center gap-2 hover:underline"

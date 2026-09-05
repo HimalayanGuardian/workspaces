@@ -101,7 +101,7 @@ export const TopNavPowerK = observer(() => {
     return () => {
       setTopNavInputRef(null);
     };
-  }, [setTopNavInputRef]);
+  }, [setTopNavInputRef, inputRef]);
 
   const handleClear = () => {
     setSearchTerm("");
@@ -203,25 +203,30 @@ export const TopNavPowerK = observer(() => {
         return;
       }
     },
-    [searchTerm, activePage, context, shouldShowContextBasedActions, setActivePage, closePanel]
+    [searchTerm, activePage, context, shouldShowContextBasedActions, setActivePage, closePanel, isOpen, containerRef]
   );
 
   return (
     <div ref={containerRef} className="relative">
+      {/* The width is capped rather than fixed: at 364px this alone is wider than
+          a 360px phone, which pushed the notification, help and attendance
+          controls off the right edge of the bar. */}
       <div
-        className={cn("relative z-30 flex w-[364px] items-center transition-all duration-300 ease-in-out", {
-          "w-[554px]": isOpen,
+        className={cn("relative z-30 flex w-full max-w-[364px] items-center transition-all duration-300 ease-in-out", {
+          "md:max-w-[554px]": isOpen,
         })}
       >
-        <div
+        {/* A label, not a div with role="button": clicking anywhere in the box
+            focuses the input natively, so this needs no click handler and no
+            ARIA, and it works for keyboard and screen-reader users. The input
+            is a child, which associates the two without needing an id. */}
+        <label
           className={cn(
             "flex h-7 w-full items-center rounded-lg border border-subtle-1 bg-layer-2 p-2 transition-colors duration-200",
             {
               "bg-layer-1": isOpen,
             }
           )}
-          onClick={() => inputRef.current?.focus()}
-          role="button"
         >
           <SearchIcon className="mr-2 size-3.5 shrink-0 text-placeholder" />
           <input
@@ -239,11 +244,11 @@ export const TopNavPowerK = observer(() => {
             className="placeholder-text-placeholder min-w-0 flex-1 bg-transparent text-13 text-primary outline-none"
           />
           {searchTerm && (
-            <button type="button" onClick={handleClear} className="ml-2 shrink-0">
+            <button type="button" onClick={handleClear} className="ml-2 shrink-0" aria-label="Clear search">
               <CloseIcon className="size-3.5 text-placeholder hover:text-primary" />
             </button>
           )}
-        </div>
+        </label>
       </div>
       <div
         className={cn(

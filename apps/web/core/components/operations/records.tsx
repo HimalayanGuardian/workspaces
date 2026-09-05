@@ -93,7 +93,7 @@ export const RecordModal = observer(function RecordModal({
       <div className="flex flex-col gap-4 p-5">
         <h2 className="text-15 font-semibold text-primary">{record ? "Edit record" : "New record"}</h2>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-11 font-medium tracking-wide text-tertiary uppercase">
             Type
             <select
@@ -260,9 +260,9 @@ export const RecordList = observer(function RecordList({ workspaceSlug }: { work
                         <Link
                           key={issue.id}
                           href={`/${workspaceSlug}/projects/${issue.project_id}/issues/${issue.id}`}
-                          className="hover:underline"
+                          className="max-w-full min-w-0 hover:underline"
                         >
-                          <Pill>{issue.name}</Pill>
+                          <Pill className="max-w-full truncate">{issue.name}</Pill>
                         </Link>
                       ))}
                     </div>

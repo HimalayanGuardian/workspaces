@@ -5,5 +5,7 @@
  */
 
 export * from "./check-in-button";
+export * from "./check-in-card";
 export * from "./constants";
 export * from "./get-position";
+export * from "./use-attendance";

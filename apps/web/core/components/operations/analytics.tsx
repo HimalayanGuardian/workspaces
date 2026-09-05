@@ -96,7 +96,7 @@ export const OperationsAnalytics = observer(function OperationsAnalytics({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <span className="text-11 font-medium tracking-wide text-tertiary uppercase">Period</span>
         {PERIODS.map((period) => (
           <button
@@ -221,8 +221,8 @@ export const OperationsAnalytics = observer(function OperationsAnalytics({
             {productivity.data.members.length === 0 ? (
               <EmptyPanel label="No members to report on" />
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-13">
+              <div className="-mx-4 overflow-x-auto px-4">
+                <table className="w-full min-w-[560px] text-13">
                   <thead>
                     <tr className="text-11 tracking-wide text-tertiary uppercase">
                       <th className="py-2 text-left font-medium">Member</th>

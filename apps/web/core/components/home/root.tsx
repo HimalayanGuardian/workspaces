@@ -13,6 +13,7 @@ import { ContentWrapper } from "@plane/ui";
 import { useHome } from "@/hooks/store/use-home";
 import { useUserProfile, useUser } from "@/hooks/store/user";
 // plane web imports
+import { AttendanceCheckInCard } from "@/components/attendance";
 import { TourRoot } from "@/components/onboarding/tour/root";
 // local imports
 import { DashboardWidgets } from "./home-dashboard-widgets";
@@ -57,6 +58,7 @@ export const WorkspaceHomeView = observer(function WorkspaceHomeView() {
         <ContentWrapper className="mx-auto scrollbar-hide gap-6 bg-surface-1 px-page-x">
           <div className="mx-auto w-full max-w-[800px]">
             {currentUser && <UserGreetingsView user={currentUser} />}
+            <AttendanceCheckInCard />
             <DashboardWidgets />
           </div>
         </ContentWrapper>

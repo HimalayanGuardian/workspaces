@@ -177,7 +177,7 @@ export const WorkLogEditor = observer(function WorkLogEditor({ workspaceSlug }: 
       title="Your work log"
       description={isFiled ? `Filed ${formatDate(workLog.submitted_at)}` : "Saved as you type"}
       action={
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <input
             type="date"
             value={date}

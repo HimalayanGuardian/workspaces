@@ -85,7 +85,7 @@ type SectionProps = {
 export function Section({ title, description, action, children, className }: SectionProps) {
   return (
     <section className={cn("rounded-lg border border-subtle bg-layer-1", className)}>
-      <header className="flex items-start justify-between gap-3 border-b border-subtle px-4 py-3">
+      <header className="flex flex-col gap-2 border-b border-subtle px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0">
           <h2 className="truncate text-13 font-semibold text-primary">{title}</h2>
           {description && <p className="mt-0.5 text-11 text-tertiary">{description}</p>}
@@ -162,7 +162,7 @@ export function BarList({ rows, emptyLabel = "Nothing here yet" }: { rows: TBarR
     <ul className="flex flex-col gap-2">
       {rows.map((row) => (
         <li key={row.label} className="flex items-center gap-3">
-          <span className="w-40 shrink-0 truncate text-13 text-secondary" title={row.label}>
+          <span className="w-24 shrink-0 truncate text-13 text-secondary sm:w-40" title={row.label}>
             {row.label}
           </span>
           <span className="h-2 flex-1 overflow-hidden rounded-full bg-layer-3">

@@ -97,7 +97,7 @@ export const DeploymentModal = observer(function DeploymentModal({
           {deployment ? "Update deployment" : "Record a deployment"}
         </h2>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-11 font-medium tracking-wide text-tertiary uppercase">
             Project
             <select
@@ -269,9 +269,9 @@ export const DeploymentList = observer(function DeploymentList({ workspaceSlug }
                       <Link
                         key={issue.id}
                         href={`/${workspaceSlug}/projects/${issue.project_id}/issues/${issue.id}`}
-                        className="hover:underline"
+                        className="max-w-full min-w-0 hover:underline"
                       >
-                        <Pill>{issue.name}</Pill>
+                        <Pill className="max-w-full truncate">{issue.name}</Pill>
                       </Link>
                     ))}
                   </div>

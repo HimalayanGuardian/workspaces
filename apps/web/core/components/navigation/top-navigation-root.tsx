@@ -51,16 +51,18 @@ export const TopNavigationRoot = observer(function TopNavigationRoot() {
         "px-2": !showLabel,
       })}
     >
-      {/* Workspace Menu */}
-      <div className="flex-1 shrink-0">
+      {/* Workspace Menu -- allowed to shrink and truncate on a narrow screen so
+          the actions on the right stay reachable. */}
+      <div className="min-w-0 flex-1">
         <WorkspaceMenuRoot variant="top-navigation" />
       </div>
-      {/* Power K Search */}
-      <div className="shrink-0">
+      {/* Power K Search -- hidden on the narrowest screens, where it would take
+          the whole bar; the same search is in the app rail. */}
+      <div className="hidden min-w-0 shrink sm:flex">
         <TopNavPowerK />
       </div>
       {/* Additional Actions */}
-      <div className="flex flex-1 shrink-0 items-center justify-end gap-1">
+      <div className="flex shrink-0 items-center justify-end gap-1">
         <Tooltip label="Inbox" side="bottom">
           <AppSidebarItem
             variant="link"
@@ -79,7 +81,9 @@ export const TopNavigationRoot = observer(function TopNavigationRoot() {
           />
         </Tooltip>
         <HelpMenuRoot />
-        <StarUsOnGitHubLink />
+        <div className="hidden md:block">
+          <StarUsOnGitHubLink />
+        </div>
         <AttendanceCheckInButton />
         <div className="flex size-8 items-center justify-center rounded-md hover:bg-layer-1-hover">
           <UserMenuRoot />

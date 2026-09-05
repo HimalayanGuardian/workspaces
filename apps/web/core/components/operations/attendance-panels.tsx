@@ -297,7 +297,7 @@ export const WorkingHoursPanel = observer(function WorkingHoursPanel() {
         <BridgeMissingPanel what="Working hours" reason={data && data.available === false ? data.error : undefined} />
       ) : (
         <div className="flex flex-col gap-4">
-          <TileGrid className="xl:grid-cols-3">
+          <TileGrid className="grid-cols-1 sm:grid-cols-3 xl:grid-cols-3">
             <StatTile label="Per day" value={formatHours(data.hours_per_day)} />
             <StatTile label="Per week" value={formatHours(data.hours_per_week)} />
             <StatTile label="Calendar" value={data.calendar} />

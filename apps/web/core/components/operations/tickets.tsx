@@ -113,7 +113,7 @@ export const CreateTicketModal = observer(function CreateTicketModal({
           className="w-full resize-y rounded-md border border-subtle bg-layer-1 px-3 py-2 text-13 text-primary placeholder:text-placeholder"
         />
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1 text-11 font-medium tracking-wide text-tertiary uppercase">
             Source
             <select
@@ -144,7 +144,7 @@ export const CreateTicketModal = observer(function CreateTicketModal({
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 text-11 font-medium tracking-wide text-tertiary uppercase">
+          <label className="flex min-w-0 flex-col gap-1 text-11 font-medium tracking-wide text-tertiary uppercase">
             Likely project
             <select
               value={form.project ?? ""}
@@ -266,26 +266,28 @@ export const TicketList = observer(function TicketList({ workspaceSlug }: { work
           ) : (data?.results.length ?? 0) === 0 ? (
             <EmptyPanel label="No requests here" />
           ) : (
-            <ul>
-              {data?.results.map((ticket) => (
-                <li key={ticket.id} className="border-b border-subtle last:border-0">
-                  <button
-                    type="button"
-                    onClick={() => setSelected(ticket.id)}
-                    className="flex w-full items-center gap-3 py-2.5 text-left transition-colors hover:bg-layer-transparent-hover"
-                  >
-                    <span className="w-16 shrink-0 text-11 text-placeholder">OPS-{ticket.sequence_id}</span>
-                    <span className="min-w-0 flex-1 truncate text-13 text-primary">{ticket.name}</span>
-                    <Pill className={PRIORITY_CLASS[ticket.priority]}>{PRIORITY_LABEL[ticket.priority]}</Pill>
-                    <Pill>{TICKET_SOURCE_LABEL[ticket.source]}</Pill>
-                    <Pill className={TICKET_STATUS_CLASS[ticket.status]}>{TICKET_STATUS_LABEL[ticket.status]}</Pill>
-                    <span className="w-24 shrink-0 text-right text-11 text-placeholder">
-                      {formatDate(ticket.created_at)}
-                    </span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <div className="-mx-4 overflow-x-auto px-4">
+              <ul className="min-w-[560px]">
+                {data?.results.map((ticket) => (
+                  <li key={ticket.id} className="border-b border-subtle last:border-0">
+                    <button
+                      type="button"
+                      onClick={() => setSelected(ticket.id)}
+                      className="flex w-full items-center gap-3 py-2.5 text-left transition-colors hover:bg-layer-transparent-hover"
+                    >
+                      <span className="w-16 shrink-0 text-11 text-placeholder">OPS-{ticket.sequence_id}</span>
+                      <span className="min-w-0 flex-1 truncate text-13 text-primary">{ticket.name}</span>
+                      <Pill className={PRIORITY_CLASS[ticket.priority]}>{PRIORITY_LABEL[ticket.priority]}</Pill>
+                      <Pill>{TICKET_SOURCE_LABEL[ticket.source]}</Pill>
+                      <Pill className={TICKET_STATUS_CLASS[ticket.status]}>{TICKET_STATUS_LABEL[ticket.status]}</Pill>
+                      <span className="w-24 shrink-0 text-right text-11 text-placeholder">
+                        {formatDate(ticket.created_at)}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </div>
       </Section>
@@ -457,7 +459,7 @@ export const TicketDetailModal = observer(function TicketDetailModal({
               <select
                 value={convertProjectId || ticket.project || ""}
                 onChange={(event) => setConvertProjectId(event.target.value)}
-                className="rounded-md border border-subtle bg-layer-1 px-2 py-1 text-13 text-primary"
+                className="min-w-0 rounded-md border border-subtle bg-layer-1 px-2 py-1 text-13 text-primary"
               >
                 <option value="">Choose a project</option>
                 {joinedProjectIds.map((projectId) => (

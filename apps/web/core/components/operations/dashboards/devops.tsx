@@ -108,11 +108,11 @@ export const DevOpsDashboard = observer(function DevOpsDashboard({ workspaceSlug
               {data.history.map((deployment) => (
                 <li
                   key={deployment.id}
-                  className="flex items-center justify-between gap-3 border-b border-subtle py-2 last:border-0"
+                  className="flex flex-col gap-1 border-b border-subtle py-2 last:border-0 sm:flex-row sm:items-center sm:justify-between sm:gap-3"
                 >
                   <span className="flex min-w-0 items-center gap-2">
                     <span className="truncate text-13 font-medium text-primary">{deployment.version}</span>
-                    <span className="shrink-0 text-11 text-placeholder">
+                    <span className="truncate text-11 text-placeholder">
                       {getProjectById(deployment.project)?.name ?? "Project"} ·{" "}
                       {DEPLOYMENT_ENVIRONMENT_LABEL[deployment.environment]}
                     </span>
