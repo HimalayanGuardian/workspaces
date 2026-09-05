@@ -36,7 +36,7 @@ from plane.db.models import (
     WorkLog,
     WorkspaceMember,
 )
-from plane.utils.engineering_ops import average, hours_between
+from plane.utils.engineering_ops import average, avatar_url, hours_between
 
 from .helpers import (
     count_by,
@@ -237,7 +237,8 @@ class PMDashboardEndpoint(BaseAPIView):
         members = list(
             WorkspaceMember.objects.filter(workspace=workspace, is_active=True)
             .exclude(member__is_bot=True)
-            .values("member_id", "member__display_name", "member__avatar_url")
+            .annotate(member_avatar_url=avatar_url("member"))
+            .values("member_id", "member__display_name", "member_avatar_url")
         )
         member_ids = [m["member_id"] for m in members]
 
@@ -254,7 +255,7 @@ class PMDashboardEndpoint(BaseAPIView):
                 {
                     "member_id": str(m["member_id"]),
                     "display_name": m["member__display_name"],
-                    "avatar_url": m["member__avatar_url"],
+                    "avatar_url": m["member_avatar_url"],
                 }
                 for m in members
                 if m["member_id"] not in filed_today
@@ -283,7 +284,8 @@ class PMDashboardEndpoint(BaseAPIView):
         wip_states = buckets["in_progress"] + buckets["ready_for_test"]
         per_assignee = (
             IssueAssignee.objects.filter(issue__in=issues.filter(state_id__in=wip_states))
-            .values("assignee_id", "assignee__display_name", "assignee__avatar_url")
+            .annotate(assignee_avatar_url=avatar_url("assignee"))
+            .values("assignee_id", "assignee__display_name", "assignee_avatar_url")
             .annotate(count=Count("issue_id", distinct=True))
             .order_by("-count")
         )
@@ -306,7 +308,7 @@ class PMDashboardEndpoint(BaseAPIView):
                 {
                     "member_id": str(row["assignee_id"]),
                     "display_name": row["assignee__display_name"],
-                    "avatar_url": row["assignee__avatar_url"],
+                    "avatar_url": row["assignee_avatar_url"],
                     "wip": row["count"],
                 }
                 for row in per_assignee

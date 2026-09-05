@@ -39,6 +39,7 @@ from plane.db.models import (
     WorkspaceMember,
 )
 from plane.utils.engineering_ops import (
+    avatar_url,
     average,
     days_between,
     get_operations_config,
@@ -326,7 +327,8 @@ class ProductivityAnalyticsEndpoint(BaseAPIView):
         members = list(
             WorkspaceMember.objects.filter(workspace=workspace, is_active=True)
             .exclude(member__is_bot=True)
-            .values("member_id", "member__display_name", "member__avatar_url")
+            .annotate(member_avatar_url=avatar_url("member"))
+            .values("member_id", "member__display_name", "member_avatar_url")
         )
         member_ids = [m["member_id"] for m in members]
 
@@ -379,7 +381,7 @@ class ProductivityAnalyticsEndpoint(BaseAPIView):
                     {
                         "member_id": str(m["member_id"]),
                         "display_name": m["member__display_name"],
-                        "avatar_url": m["member__avatar_url"],
+                        "avatar_url": m["member_avatar_url"],
                         "completed": completed_by_member.get(m["member_id"], 0),
                         "wip": wip_by_member.get(m["member_id"], 0),
                         "work_logs_filed": logs_by_member.get(m["member_id"], 0),
@@ -429,7 +431,8 @@ class TeamAnalyticsEndpoint(BaseAPIView):
         members = list(
             WorkspaceMember.objects.filter(workspace=workspace, is_active=True)
             .exclude(member__is_bot=True)
-            .values("member_id", "member__display_name", "member__avatar_url", "role")
+            .annotate(member_avatar_url=avatar_url("member"))
+            .values("member_id", "member__display_name", "member_avatar_url", "role")
         )
         member_ids = [m["member_id"] for m in members]
 
@@ -462,7 +465,7 @@ class TeamAnalyticsEndpoint(BaseAPIView):
                     {
                         "member_id": str(m["member_id"]),
                         "display_name": m["member__display_name"],
-                        "avatar_url": m["member__avatar_url"],
+                        "avatar_url": m["member_avatar_url"],
                         "role": m["role"],
                         "open_assigned": assigned_open.get(m["member_id"], 0),
                         "logged_hours": hours.get(m["member_id"], 0.0),

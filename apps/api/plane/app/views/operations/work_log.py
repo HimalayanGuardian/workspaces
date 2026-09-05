@@ -30,7 +30,7 @@ from plane.app.permissions import ROLE, allow_permission
 from plane.app.serializers import WorkLogSerializer
 from plane.app.views.base import BaseAPIView, BaseViewSet
 from plane.db.models import Issue, Workspace, WorkspaceMember, WorkLog, WorkLogIssue
-from plane.utils.engineering_ops import get_operations_config
+from plane.utils.engineering_ops import avatar_url, get_operations_config
 
 
 def sync_work_log_issues(work_log, issue_ids):
@@ -245,7 +245,8 @@ class MissingWorkLogEndpoint(BaseAPIView):
         members = list(
             WorkspaceMember.objects.filter(workspace=workspace, is_active=True)
             .exclude(member__is_bot=True)
-            .values("member_id", "member__display_name", "member__avatar_url")
+            .annotate(member_avatar_url=avatar_url("member"))
+            .values("member_id", "member__display_name", "member_avatar_url")
         )
         member_ids = [m["member_id"] for m in members]
 
@@ -270,7 +271,7 @@ class MissingWorkLogEndpoint(BaseAPIView):
                             {
                                 "member_id": str(m["member_id"]),
                                 "display_name": m["member__display_name"],
-                                "avatar_url": m["member__avatar_url"],
+                                "avatar_url": m["member_avatar_url"],
                             }
                             for m in members
                             if (m["member_id"], cursor) not in filed

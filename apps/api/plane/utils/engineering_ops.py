@@ -19,7 +19,45 @@ resolution -- so that "which states count as QA?" has exactly one answer.
 from datetime import timedelta
 
 # Django imports
+from django.db.models import Case, CharField, F, Q, Value, When
+from django.db.models.functions import Cast, Concat
 from django.utils import timezone
+
+
+def avatar_url(relation=None):
+    """
+    The SQL equivalent of ``User.avatar_url``, for use inside ``.values()``.
+
+    ``avatar_url`` is a Python property, not a column, so naming it in a
+    queryset raises ``FieldError: Cannot resolve keyword 'avatar_url' into
+    field``. That is a 500 rather than a missing avatar, and it takes the whole
+    endpoint with it -- which is why this exists rather than each dashboard
+    reaching for the property name.
+
+    Reproduces both branches of the property in SQL: an uploaded avatar becomes
+    its static asset route, a plain URL in ``avatar`` is returned as it is, and
+    anything else is NULL.
+
+    ``relation`` is the path from the queryset's model to the user -- ``member``
+    on a WorkspaceMember queryset, ``assignee`` on an IssueAssignee one, or
+    ``None`` when querying User itself.
+    """
+    prefix = f"{relation}__" if relation else ""
+    return Case(
+        When(
+            **{f"{prefix}avatar_asset__isnull": False},
+            then=Concat(
+                Value("/api/assets/v2/static/"),
+                Cast(f"{prefix}avatar_asset_id", output_field=CharField()),
+                Value("/"),
+                output_field=CharField(),
+            ),
+        ),
+        # `avatar` is a TextField(blank=True), so "unset" is the empty string.
+        When(~Q(**{f"{prefix}avatar": ""}), then=F(f"{prefix}avatar")),
+        default=Value(None),
+        output_field=CharField(),
+    )
 
 
 # --------------------------------------------------------------------------

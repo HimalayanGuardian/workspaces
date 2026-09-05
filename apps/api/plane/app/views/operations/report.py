@@ -42,7 +42,7 @@ from plane.db.models import (
     Workspace,
     WorkspaceMember,
 )
-from plane.utils.engineering_ops import average, days_between, get_operations_config
+from plane.utils.engineering_ops import average, avatar_url, days_between, get_operations_config
 
 from .dashboard import qa_failure_count
 from .helpers import overdue_filter, scoped_issues, scoped_project_ids, state_ids_by_bucket
@@ -207,7 +207,8 @@ class OperationsReportEndpoint(BaseAPIView):
         members = list(
             WorkspaceMember.objects.filter(workspace=workspace, is_active=True)
             .exclude(member__is_bot=True)
-            .values("member_id", "member__display_name", "member__avatar_url")
+            .annotate(member_avatar_url=avatar_url("member"))
+            .values("member_id", "member__display_name", "member_avatar_url")
         )
         member_ids = [m["member_id"] for m in members]
         issues = scoped_issues(project_ids)
@@ -235,7 +236,7 @@ class OperationsReportEndpoint(BaseAPIView):
                 {
                     "member_id": str(m["member_id"]),
                     "display_name": m["member__display_name"],
-                    "avatar_url": m["member__avatar_url"],
+                    "avatar_url": m["member_avatar_url"],
                     "completed": completed_by.get(m["member_id"], 0),
                     "work_logs_filed": logs.get(m["member_id"], (0, 0.0))[0],
                     "logged_hours": logs.get(m["member_id"], (0, 0.0))[1],

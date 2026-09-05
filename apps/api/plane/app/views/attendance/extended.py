@@ -32,6 +32,7 @@ from plane.app.permissions import ROLE, allow_permission
 from plane.app.views.base import BaseAPIView
 from plane.db.models import WorkspaceMember
 from plane.throttles.attendance import AttendanceRateThrottle
+from plane.utils.engineering_ops import avatar_url
 from plane.utils.odoo_bridge import OdooBridgeUnavailable, call, call_optional, is_configured
 
 from .base import UNAVAILABLE, AttendanceBaseEndpoint
@@ -170,7 +171,8 @@ class TeamAvailabilityEndpoint(BaseAPIView):
         members = list(
             WorkspaceMember.objects.filter(workspace__slug=slug, is_active=True)
             .exclude(member__is_bot=True)
-            .values("member_id", "member__email", "member__display_name", "member__avatar_url")[:TEAM_FANOUT_LIMIT]
+            .annotate(member_avatar_url=avatar_url("member"))
+            .values("member_id", "member__email", "member__display_name", "member_avatar_url")[:TEAM_FANOUT_LIMIT]
         )
 
         try:
@@ -225,7 +227,7 @@ class TeamAvailabilityEndpoint(BaseAPIView):
                 {
                     "member_id": str(member["member_id"]),
                     "display_name": member["member__display_name"],
-                    "avatar_url": member["member__avatar_url"],
+                    "avatar_url": member["member_avatar_url"],
                     "linked": record is not None,
                     "checked_in": bool(record.get("checked_in")) if record else None,
                     "check_in": record.get("check_in") if record else None,
